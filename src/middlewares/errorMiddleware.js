@@ -6,6 +6,12 @@ export const errorHandler = (err, req, res, next) => {
   let message = err.message || 'Internal Server Error';
   let errors = err.errors || null;
 
+  // Handle Mongoose CastError (e.g. invalid ObjectId)
+  if (err.name === 'CastError') {
+    statusCode = 400;
+    message = `Invalid resource identifier for field '${err.path}'.`;
+  }
+
   // Handle Mongoose duplicate key error (11000)
   if (err.code === 11000) {
     statusCode = 409;
@@ -23,6 +29,12 @@ export const errorHandler = (err, req, res, next) => {
     }));
   }
 
+  // Handle Multer upload errors
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    statusCode = 400;
+    message = 'Uploaded file exceeds maximum permitted file size.';
+  }
+
   // Handle JWT errors
   if (err.name === 'JsonWebTokenError') {
     statusCode = 401;
@@ -32,8 +44,21 @@ export const errorHandler = (err, req, res, next) => {
     message = 'Authentication token expired';
   }
 
-  if (ENV.NODE_ENV === 'development') {
-    console.error(`[Error] ${req.method} ${req.originalUrl}:`, err);
+  // Handle CORS errors
+  if (err.message && err.message.includes('CORS')) {
+    statusCode = 403;
+    message = 'Cross-Origin Request Blocked by server policy.';
+  }
+
+  // Always log internal server errors on backend console
+  if (statusCode === 500 || ENV.NODE_ENV !== 'production') {
+    console.error(`[Error] ${req.method} ${req.originalUrl}:`, err.message || err);
+  }
+
+  // Mask internal 500 errors from clients in production
+  if (ENV.NODE_ENV === 'production' && statusCode === 500) {
+    message = 'An unexpected server error occurred. Please contact support.';
+    errors = null;
   }
 
   return ApiResponse.error(res, {

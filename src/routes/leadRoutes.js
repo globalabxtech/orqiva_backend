@@ -7,7 +7,7 @@ import {
   deleteLead,
   exportLeadsCSV,
 } from '../controllers/leadController.js';
-import { authMiddleware } from '../middlewares/authMiddleware.js';
+import { authMiddleware, adminMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
@@ -18,6 +18,6 @@ router.get('/export/csv', exportLeadsCSV);
 router.get('/:id', getLeadById);
 router.put('/:id/status', updateLeadStatus);
 router.post('/:id/notes', addLeadNote);
-router.delete('/:id', deleteLead);
+router.delete('/:id', adminMiddleware(['super_admin', 'admin']), deleteLead);
 
 export default router;

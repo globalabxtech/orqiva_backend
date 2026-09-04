@@ -26,3 +26,43 @@ export const authLimiter = rateLimit({
     });
   },
 });
+
+export const submissionLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30, // Limit public form submissions (leads, contacts, newsletter, applications)
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    return ApiResponse.error(res, {
+      statusCode: 429,
+      message: 'Too many form submissions from this IP address. Please try again later.',
+    });
+  },
+});
+
+export const meetingLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit meeting requests
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    return ApiResponse.error(res, {
+      statusCode: 429,
+      message: 'Too many meeting requests from this IP address. Please try again after 15 minutes.',
+    });
+  },
+});
+
+export const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 40, // Limit file uploads
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    return ApiResponse.error(res, {
+      statusCode: 429,
+      message: 'Too many file uploads requested. Please try again later.',
+    });
+  },
+});
+

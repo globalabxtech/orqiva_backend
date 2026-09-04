@@ -3,13 +3,13 @@ import {
   getFeaturedProject,
   updateFeaturedProject,
 } from '../controllers/featuredProjectController.js';
-import { authMiddleware } from '../middlewares/authMiddleware.js';
+import { authMiddleware, adminMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
 router.use(authMiddleware);
 
 router.get('/', getFeaturedProject);
-router.put('/', updateFeaturedProject);
+router.put('/', adminMiddleware(['super_admin', 'admin']), updateFeaturedProject);
 
 export default router;

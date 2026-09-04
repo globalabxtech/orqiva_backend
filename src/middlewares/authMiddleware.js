@@ -21,7 +21,7 @@ export const authMiddleware = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, ENV.JWT_SECRET);
-    const admin = await Admin.findById(decoded.id);
+    const admin = await Admin.findById(decoded.id).select('-password -loginOtp -loginOtpExpires');
 
     if (!admin || !admin.isActive) {
       return ApiResponse.error(res, {
@@ -41,11 +41,12 @@ export const authMiddleware = async (req, res, next) => {
 };
 
 export const adminMiddleware = (roles = ['super_admin', 'admin']) => {
+  const allowedRoles = Array.isArray(roles) ? roles : [roles];
   return (req, res, next) => {
-    if (!req.admin || !roles.includes(req.admin.role)) {
+    if (!req.admin || !allowedRoles.includes(req.admin.role)) {
       return ApiResponse.error(res, {
         statusCode: 403,
-        message: 'Access denied: Insufficient permissions for this action.',
+        message: 'Access denied: Insufficient administrative permissions for this action.',
       });
     }
     next();

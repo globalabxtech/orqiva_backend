@@ -21,6 +21,10 @@ app.set('trust proxy', 1);
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
+    xContentTypeOptions: true,
+    xFrameOptions: { action: 'deny' },
+    xXssProtection: true,
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
   })
 );
 
@@ -31,31 +35,41 @@ const allowedOrigins = [
   ENV.FRONTEND_URL,
   ENV.ADMIN_FRONTEND_URL,
   ENV.PUBLIC_WEBSITE_URL,
+  ...ENV.CORS_ALLOWED_ORIGINS,
 ].filter(Boolean);
+
+const isOriginAllowed = (origin) => {
+  if (!origin) return true; // Server-to-server, curl, non-browser clients
+
+  // Check explicit allowed origins
+  if (allowedOrigins.includes(origin)) return true;
+
+  // Check official company domains
+  if (/^https:\/\/([a-zA-Z0-9-]+\.)*orqivatech\.com$/.test(origin)) return true;
+
+  // Check Vercel deployments (e.g. *.vercel.app)
+  if (/^https:\/\/[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.vercel\.app$/.test(origin)) return true;
+
+  // Allow localhost / local network in non-production environments
+  if (ENV.NODE_ENV !== 'production') {
+    if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return true;
+  }
+
+  return false;
+};
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, curl, server-to-server)
-      if (!origin) return callback(null, true);
-
-      // Check allowed explicit origins
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-
-      // Check Vercel deployed previews and production frontend domains
-      if (origin.endsWith('.vercel.app') || origin.includes('vercel.app')) return callback(null, true);
-
-      // Allow localhost and local development in non-production or dev ports
-      if (origin.includes('localhost') || origin.includes('127.0.0.1')) return callback(null, true);
-
-      // Fallback allowed for existing public website domains
-      if (origin.includes('orqivatech.com')) return callback(null, true);
-
-      callback(null, true);
+      if (isOriginAllowed(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS Error: Origin ${origin} not allowed by Access-Control-Allow-Origin.`));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    maxAge: 86400, // 24 hours preflight cache
   })
 );
 

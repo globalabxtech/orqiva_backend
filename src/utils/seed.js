@@ -34,7 +34,7 @@ const seedDatabase = async () => {
       role: 'super_admin',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face&q=80',
     });
-    console.log(`[Seed] ✅ Admin created: ${admin.email} (Password: ${ENV.ADMIN_PASSWORD})`);
+    console.log(`[Seed] ✅ Admin created: ${admin.email} (Password configured via environment)`);
 
     // 2. Seed Site Settings
     await SiteSettings.deleteMany({});

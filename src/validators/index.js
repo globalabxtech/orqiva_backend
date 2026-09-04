@@ -38,3 +38,23 @@ export const contactValidator = [
   body('email').isEmail().withMessage('Valid email is required').normalizeEmail(),
   body('message').trim().notEmpty().withMessage('Message is required'),
 ];
+
+export const newsletterValidator = [
+  body('email').isEmail().withMessage('Valid email address is required').normalizeEmail(),
+];
+
+export const meetingValidator = [
+  body('name').trim().notEmpty().withMessage('Full name is required'),
+  body('email').isEmail().withMessage('Valid email address is required').normalizeEmail(),
+  body('scheduledAt').optional().isISO8601().withMessage('Scheduled date must be a valid ISO 8601 date string'),
+  body('durationMinutes').optional().isInt({ min: 10, max: 120 }).withMessage('Duration must be between 10 and 120 minutes'),
+];
+
+export const jobApplicationValidator = [
+  body('name').optional().trim(),
+  body('candidateName').optional().trim(),
+  body('email').isEmail().withMessage('Valid email address is required').normalizeEmail(),
+  body('phone').optional().trim(),
+  body('resumeUrl').optional().trim().isString(),
+];
+

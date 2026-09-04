@@ -4,7 +4,7 @@ import {
   updateContactStatus,
   deleteContactSubmission,
 } from '../controllers/contactController.js';
-import { authMiddleware } from '../middlewares/authMiddleware.js';
+import { authMiddleware, adminMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
@@ -12,6 +12,6 @@ router.use(authMiddleware);
 
 router.get('/', getContactSubmissions);
 router.put('/:id/status', updateContactStatus);
-router.delete('/:id', deleteContactSubmission);
+router.delete('/:id', adminMiddleware(['super_admin', 'admin']), deleteContactSubmission);
 
 export default router;

@@ -21,8 +21,9 @@ import {
   uploadPublicFile,
 } from '../controllers/publicController.js';
 import { validate } from '../middlewares/validateMiddleware.js';
-import { leadValidator, contactValidator } from '../validators/index.js';
-import { upload } from '../middlewares/uploadMiddleware.js';
+import { leadValidator, contactValidator, newsletterValidator, jobApplicationValidator } from '../validators/index.js';
+import { uploadMedia, uploadResume } from '../middlewares/uploadMiddleware.js';
+import { submissionLimiter, uploadLimiter } from '../middlewares/rateLimiter.js';
 
 const router = express.Router();
 
@@ -30,7 +31,6 @@ const router = express.Router();
 router.get('/home', getPublicHome);
 router.get('/homepage', getPublicHome);
 router.get('/all', getPublicHome);
-
 
 // Content endpoints
 router.get('/services', getPublicServices);
@@ -53,13 +53,13 @@ router.get('/jobs', getPublicJobs);
 router.get('/careers', getPublicJobs);
 router.get('/settings', getPublicSettings);
 
-// Public submissions & uploads
-router.post('/upload', upload.single('file'), uploadPublicFile);
-router.post('/careers/upload-resume', upload.single('resume'), uploadPublicFile);
-router.post('/leads', leadValidator, validate, submitPublicLead);
-router.post('/contact', contactValidator, validate, submitPublicContact);
-router.post('/newsletter', submitPublicNewsletter);
-router.post('/jobs/apply', submitJobApplication);
-router.post('/careers/apply', submitJobApplication);
+// Public submissions & uploads (rate-limited and validated)
+router.post('/upload', uploadLimiter, uploadMedia.single('file'), uploadPublicFile);
+router.post('/careers/upload-resume', uploadLimiter, uploadResume.single('resume'), uploadPublicFile);
+router.post('/leads', submissionLimiter, leadValidator, validate, submitPublicLead);
+router.post('/contact', submissionLimiter, contactValidator, validate, submitPublicContact);
+router.post('/newsletter', submissionLimiter, newsletterValidator, validate, submitPublicNewsletter);
+router.post('/jobs/apply', submissionLimiter, jobApplicationValidator, validate, submitJobApplication);
+router.post('/careers/apply', submissionLimiter, jobApplicationValidator, validate, submitJobApplication);
 
 export default router;

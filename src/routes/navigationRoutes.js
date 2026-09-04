@@ -5,15 +5,15 @@ import {
   updateNavItem,
   deleteNavItem,
 } from '../controllers/navigationController.js';
-import { authMiddleware } from '../middlewares/authMiddleware.js';
+import { authMiddleware, adminMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
 router.use(authMiddleware);
 
 router.get('/', getNavItems);
-router.post('/', createNavItem);
-router.put('/:id', updateNavItem);
-router.delete('/:id', deleteNavItem);
+router.post('/', adminMiddleware(['super_admin', 'admin']), createNavItem);
+router.put('/:id', adminMiddleware(['super_admin', 'admin']), updateNavItem);
+router.delete('/:id', adminMiddleware(['super_admin', 'admin']), deleteNavItem);
 
 export default router;

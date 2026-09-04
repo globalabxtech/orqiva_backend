@@ -26,34 +26,65 @@ const storage = multer.diskStorage({
   },
 });
 
-const fileFilter = (req, file, cb) => {
-  const allowedMimeTypes = [
-    'image/jpeg',
-    'image/png',
-    'image/webp',
-    'image/svg+xml',
-    'image/gif',
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/octet-stream',
-    'text/plain',
-  ];
+// Allowed types for Admin Media Uploads
+const MEDIA_ALLOWED_MIMES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'image/svg+xml',
+  'application/pdf',
+];
+const MEDIA_ALLOWED_EXTS = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg', '.pdf'];
 
+// Allowed types for Candidate Resume Uploads
+const RESUME_ALLOWED_MIMES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+];
+const RESUME_ALLOWED_EXTS = ['.pdf', '.doc', '.docx'];
+
+const mediaFileFilter = (req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase();
-  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.svg', '.gif', '.pdf', '.doc', '.docx', '.txt', '.rtf'];
+  const mime = file.mimetype.toLowerCase();
 
-  if (allowedMimeTypes.includes(file.mimetype) || allowedExtensions.includes(ext)) {
+  if (MEDIA_ALLOWED_MIMES.includes(mime) && MEDIA_ALLOWED_EXTS.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file format. Supported formats: PDF, DOC, DOCX, TXT, JPG, PNG, WEBP'), false);
+    cb(new Error('Invalid file format. Allowed formats: JPG, JPEG, PNG, WEBP, GIF, SVG, PDF'), false);
   }
 };
 
-export const upload = multer({
+const resumeFileFilter = (req, file, cb) => {
+  const ext = path.extname(file.originalname).toLowerCase();
+  const mime = file.mimetype.toLowerCase();
+
+  if (RESUME_ALLOWED_MIMES.includes(mime) && RESUME_ALLOWED_EXTS.includes(ext)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Invalid resume format. Only PDF, DOC, and DOCX files up to 5MB are accepted.'), false);
+  }
+};
+
+export const uploadMedia = multer({
   storage,
-  fileFilter,
+  fileFilter: mediaFileFilter,
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB limit
+    files: 1,
   },
 });
+
+export const uploadResume = multer({
+  storage,
+  fileFilter: resumeFileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+    files: 1,
+  },
+});
+
+// Backward compatibility alias
+export const upload = uploadMedia;
+
