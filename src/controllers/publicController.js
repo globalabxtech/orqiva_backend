@@ -20,6 +20,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { sendLeadEmails, sendMeetingScheduledEmails } from '../utils/emailService.js';
 import { Meeting } from '../models/Meeting.js';
 import { createGoogleMeetEvent } from '../utils/googleMeetService.js';
+import { obfuscatePayload } from '../utils/encryption.js';
 
 // Aggregate Homepage Data
 export const getPublicHome = asyncHandler(async (req, res) => {
@@ -51,24 +52,44 @@ export const getPublicHome = asyncHandler(async (req, res) => {
     SiteSettings.findOne(),
   ]);
 
-  return ApiResponse.success(res, {
-    message: 'Public homepage data fetched.',
-    data: {
-      hero,
-      stats,
-      statistics: stats,
-      featuredProject,
-      services,
-      industries,
-      technologies,
-      projects,
-      testimonials,
-      blogPosts,
-      faqs,
-      careers,
-      jobs: careers,
-      settings,
-    },
+  const payloadData = {
+    hero,
+    stats,
+    statistics: stats,
+    featuredProject,
+    services,
+    industries,
+    technologies,
+    projects,
+    testimonials,
+    blogPosts,
+    faqs,
+    careers,
+    jobs: careers,
+    settings,
+  };
+
+  // Support plain query parameter for debug/testing
+  if (req.query.plain === 'true') {
+    return ApiResponse.success(res, {
+      message: 'Public homepage data fetched.',
+      data: payloadData,
+    });
+  }
+
+  // Return obfuscated hex ciphertext to hide data from browser DevTools/Inspect
+  const encryptedPayload = obfuscatePayload(payloadData);
+  if (!encryptedPayload) {
+    return ApiResponse.success(res, {
+      message: 'Public homepage data fetched.',
+      data: payloadData,
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    encrypted: true,
+    payload: encryptedPayload,
   });
 });
 
